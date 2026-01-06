@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbox - Handwerker Plattform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --pink: #E91E63;
+            --pink-dark: #C2185B;
+            --blue: #1976D2;
+            --green: #4CAF50;
+            --light: #F5F5F5;
+            --light-2: #FAFAFA;
+            --dark: #333333;
+            --gray-dark: #666666;
+            --gray: #999999;
+            --gray-light: #CCCCCC;
+            --border: #E0E0E0;
+            --orange: #FFA500;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: #FFFFFF;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--pink);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 3rem;
+            flex: 1;
+            margin-left: 3rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--dark);
+        }
+
+        .nav-link.active {
+            color: var(--pink);
+            border-bottom-color: var(--pink);
+        }
+
+        .navbar-menu {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        /* ===== SCREENS ===== */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ===== SCREEN 1: JOB LIST + MAP ===== */
+        .jobs-list-map {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 200px);
+        }
+
+        .jobs-list-panel {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--light);
+        }
+
+        .list-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .jobs-list-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .job-list-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .job-list-item:hover {
+            border-color: var(--pink);
+            background: rgba(233, 30, 99, 0.02);
+        }
+
+        .job-list-item.active {
+            background: rgba(233, 30, 99, 0.1);
+            border-color: var(--pink);
+            box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+        }
+
+        .job-list-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+            color: var(--dark);
+        }
+
+        .job-list-item-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .job-list-item-budget {
+            color: var(--pink);
+            font-weight: 600;
+        }
+
+        .home-map-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        #home-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .job-details-grid {
+            display: none;
+        }
+
+        .job-image {
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(135deg, #f5deb3, #e6c9a0);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #8B7355;
+        }
+
+        .job-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .job-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .job-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .job-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.9rem;
+            background: var(--light);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        .badge.open {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .job-info-panel {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: fit-content;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--gray);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .job-description {
+            margin-top: 2rem;
+        }
+
+        .job-description h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .job-description p {
+            color: var(--gray-dark);
+            line-height: 1.6;
+        }
+
+        .craftsman-card {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .craftsman-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #e0e0e0, #cccccc);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            overflow: hidden;
+        }
+
+        .craftsman-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .craftsman-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .verify-badge {
+            color: var(--pink);
+            font-size: 0.9rem;
+            margin-left: 0.3rem;
+        }
+
+        .rating {
+            color: var(--orange);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .rating-count {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .craftsman-bio {
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--pink);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--pink-dark);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light);
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* ===== SCREEN 2: MAP & OVERVIEW ===== */
+        #map-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .legend {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .legend h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .jobs-section h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .job-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .job-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .job-card-image {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, #f5deb3, #e6c9a0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            overflow: hidden;
+        }
+
+        .job-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .job-card-content {
+            padding: 1rem;
+        }
+
+        .job-card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .job-card-meta {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* ===== SCREEN 2: CRAFTSMEN LIST ===== */
+        .craftsmen-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .craftsman-card-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .craftsman-card-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            border-color: var(--pink);
+        }
+
+        .craftsman-card-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0e0, #cccccc);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            overflow: hidden;
+        }
+
+        .craftsman-card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .craftsman-card-category {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: var(--light);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.8rem;
+        }
+
+        .craftsman-card-rating {
+            color: var(--orange);
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .craftsman-card-reviews {
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .craftsman-card-price {
+            color: var(--pink);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .craftsman-filter {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tag:hover, .filter-tag.active {
+            background: var(--pink);
+            color: white;
+            border-color: var(--pink);
+        }
+
+        /* ===== SCREEN 4: MY PROFILE ===== */
+        .my-profile-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .profile-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .user-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0e0, #cccccc);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .user-email {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .settings-menu {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .menu-item {
+            padding: 1.3rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: var(--light);
+        }
+
+        .menu-item-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .menu-item-desc {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.2rem;
+        }
+
+        .my-jobs-section {
+            margin-top: 2rem;
+        }
+
+        .my-jobs-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .job-tabs {
+            display: flex;
+            gap: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .job-tab {
+            padding: 1rem 0;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--gray);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .job-tab.active {
+            color: var(--pink);
+            border-bottom-color: var(--pink);
+        }
+
+        .job-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-item-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-item-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .job-status-badge {
+            padding: 0.4rem 0.8rem;
+            background: var(--light);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .job-status-badge.active {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        /* ===== SCREEN 5: NEW JOB FORM ===== */
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-subtitle {
+            color: var(--gray-dark);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.6rem;
+            color: var(--dark);
+        }
+
+        .form-group.required label::after {
+            content: ' *';
+            color: var(--pink);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--pink);
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-top: 0.8rem;
+        }
+
+        .category-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .category-option:hover {
+            border-color: var(--pink);
+            background: rgba(233, 30, 99, 0.05);
+        }
+
+        .category-option.selected {
+            border-color: var(--pink);
+            background: rgba(233, 30, 99, 0.1);
+        }
+
+        .category-option-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-option-label {
+            font-size: 0.75rem;
+            text-align: center;
+            color: var(--gray-dark);
+            font-weight: 500;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--light-2);
+            margin-top: 0.6rem;
+        }
+
+        .upload-box:hover {
+            border-color: var(--pink);
+            background: rgba(233, 30, 99, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-text {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .upload-subtext {
+            color: var(--gray-light);
+            font-size: 0.75rem;
+        }
+
+        .form-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .navbar-nav {
+                display: none;
+            }
+
+            .job-details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-header {
+                grid-template-columns: 1fr;
+            }
+
+            .jobs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-stats-row,
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-logo">🧰 Toolbox</div>
+        <div class="navbar-nav">
+            <a href="#" class="nav-link active" data-screen="home">Aufträge</a>
+            <a href="#" class="nav-link" data-screen="craftsman">Handwerker</a>
+            <a href="#" class="nav-link" data-screen="profile">Mein Bereich</a>
+            <a href="#" class="nav-link" data-screen="new-job">Neu</a>
+        </div>
+        <div class="navbar-menu">☰</div>
+    </nav>
+
+    <!-- SCREEN 1: HOME / JOB LIST + MAP -->
+    <div id="home" class="screen active">
+        <div style="padding: 2rem 1.5rem;">
+            <div class="jobs-list-map">
+                <!-- Jobs List Panel -->
+                <div class="jobs-list-panel">
+                    <div class="list-header">
+                        <h2>📋 Aufträge (6)</h2>
+                    </div>
+                    <div class="jobs-list-items" id="jobsList">
+                        <div class="job-list-item active" onclick="selectJob(0, event); showJobDetails(0);">
+                            <div class="job-list-item-title">Küchenmontage in Wohnung</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Wien, 1020</div>
+                                <div>📅 05.12.2024</div>
+                                <div class="job-list-item-budget">€400-600</div>
+                            </div>
+                        </div>
+                        <div class="job-list-item" onclick="selectJob(1, event); showJobDetails(1);">
+                            <div class="job-list-item-title">Elektroinstallation Neubau</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Salzburg, 5020</div>
+                                <div>📅 20.11.2024</div>
+                                <div class="job-list-item-budget">€3000-4000</div>
+                            </div>
+                        </div>
+                        <div class="job-list-item" onclick="selectJob(2, event); showJobDetails(2);">
+                            <div class="job-list-item-title">Wohnzimmer streichen</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Linz, 4020</div>
+                                <div>📅 15.11.2024</div>
+                                <div class="job-list-item-budget">€500-800</div>
+                            </div>
+                        </div>
+                        <div class="job-list-item" onclick="selectJob(3, event); showJobDetails(3);">
+                            <div class="job-list-item-title">Badezimmer Wasserleitung reparieren</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Wien, 1030</div>
+                                <div>📅 10.11.2024</div>
+                                <div class="job-list-item-budget">€200-400</div>
+                            </div>
+                        </div>
+                        <div class="job-list-item" onclick="selectJob(4, event); showJobDetails(4);">
+                            <div class="job-list-item-title">Terrasse aus Holz bauen</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Wien, 1120</div>
+                                <div>📅 08.11.2024</div>
+                                <div class="job-list-item-budget">€1500-2500</div>
+                            </div>
+                        </div>
+                        <div class="job-list-item" onclick="selectJob(5, event); showJobDetails(5);">
+                            <div class="job-list-item-title">Fenster reparieren</div>
+                            <div class="job-list-item-meta">
+                                <div>📍 Graz, 8010</div>
+                                <div>📅 01.11.2024</div>
+                                <div class="job-list-item-budget">€150-300</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Panel -->
+                <div class="home-map-container">
+                    <div id="home-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: CRAFTSMEN LIST -->
+    <div id="craftsman" class="screen">
+        <div class="container">
+            <h1 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 1.5rem;">👷 Handwerker finden</h1>
+            
+            <div class="craftsman-filter">
+                <div class="filter-tag active" onclick="filterCraftsmen('all', event)">Alle (24)</div>
+                <div class="filter-tag" onclick="filterCraftsmen('tischler', event)">🪛 Tischler (8)</div>
+                <div class="filter-tag" onclick="filterCraftsmen('elektriker', event)">⚡ Elektriker (6)</div>
+                <div class="filter-tag" onclick="filterCraftsmen('maler', event)">🎨 Maler (5)</div>
+                <div class="filter-tag" onclick="filterCraftsmen('instal', event)">🚰 Installateure (5)</div>
+            </div>
+
+            <div class="craftsmen-container" id="craftsmenList">
+                <!-- Filled by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: MY PROFILE -->
+    <div id="profile" class="screen">
+        <div class="container">
+            <div class="my-profile-container">
+                <div class="profile-card">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-name">Max Mustermann</div>
+                    <div class="user-email">max@email.com</div>
+                </div>
+
+                <div class="settings-menu">
+                    <div class="menu-item">
+                        <div>
+                            <div class="menu-item-label">Einstellungen</div>
+                            <div class="menu-item-desc">Profil & Sicherheit</div>
+                        </div>
+                        <span style="color: var(--gray);">→</span>
+                    </div>
+                    <div class="menu-item">
+                        <div>
+                            <div class="menu-item-label">Benachrichtigungen</div>
+                            <div class="menu-item-desc">E-Mails & Push</div>
+                        </div>
+                        <span style="color: var(--gray);">→</span>
+                    </div>
+                </div>
+
+                <div class="my-jobs-section">
+                    <h3>Statistiken</h3>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Aufträge</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Abgeschlossen</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">4.8</div>
+                            <div class="stat-label">Bewertung</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem;">Meine Aufträge</h3>
+                    <div class="job-tabs">
+                        <div class="job-tab active" onclick="switchJobTab(event, 'all')">Alle</div>
+                        <div class="job-tab" onclick="switchJobTab(event, 'active')">Aktiv</div>
+                        <div class="job-tab" onclick="switchJobTab(event, 'completed')">Abgeschlossen</div>
+                    </div>
+
+                    <div class="job-item">
+                        <div class="job-item-info">
+                            <h4>Küchenmontage in Wohnung</h4>
+                            <div class="job-item-meta">
+                                <span>€ 400-600</span>
+                                <span>📅 05.12.2024</span>
+                            </div>
+                        </div>
+                        <span class="job-status-badge active">Aktiv</span>
+                    </div>
+
+                    <div class="job-item">
+                        <div class="job-item-info">
+                            <h4>Badezimmer renovieren</h4>
+                            <div class="job-item-meta">
+                                <span>€ 2000-2500</span>
+                                <span>📅 20.11.2024</span>
+                            </div>
+                        </div>
+                        <span class="job-status-badge">Abgeschlossen</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: NEW JOB -->
+    <div id="new-job" class="screen">
+        <div class="container">
+            <div class="form-container">
+                <h1 class="form-title">Neuen Auftrag aufgeben</h1>
+                <p class="form-subtitle">Beschreiben Sie Ihr Projekt und finden Sie den passenden Handwerker</p>
+
+                <form id="jobForm">
+                    <div class="form-group required">
+                        <label for="title">Titel des Auftrags</label>
+                        <input type="text" id="title" placeholder="z.B. Küchenmontage in Wohnung" required>
+                    </div>
+
+                    <div class="form-group required">
+                        <label>Kategorie</label>
+                        <div class="category-grid">
+                            <div class="category-option" onclick="selectCategory(event)">
+                                <div class="category-option-icon">🪛</div>
+                                <div class="category-option-label">Tischler</div>
+                            </div>
+                            <div class="category-option" onclick="selectCategory(event)">
+                                <div class="category-option-icon">⚡</div>
+                                <div class="category-option-label">Elektriker</div>
+                            </div>
+                            <div class="category-option" onclick="selectCategory(event)">
+                                <div class="category-option-icon">🎨</div>
+                                <div class="category-option-label">Maler</div>
+                            </div>
+                            <div class="category-option" onclick="selectCategory(event)">
+                                <div class="category-option-icon">🚰</div>
+                                <div class="category-option-label">Installateure</div>
+                            </div>
+                            <div class="category-option" onclick="selectCategory(event)">
+                                <div class="category-option-icon">🏗️</div>
+                                <div class="category-option-label">Allgemein</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="description">Beschreibung</label>
+                        <textarea id="description" placeholder="Beschreiben Sie Ihr Projekt..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group required">
+                            <label for="budget">Budget</label>
+                            <input type="text" id="budget" placeholder="z.B. 400-600" required>
+                        </div>
+                        <div class="form-group required">
+                            <label for="date">Gewünschtes Datum</label>
+                            <input type="text" id="date" placeholder="TT.mm.jjjj" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="location">Standort</label>
+                        <input type="text" id="location" placeholder="z.B. Wien, 1020" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Foto hochladen (optional)</label>
+                        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">📤</div>
+                            <div class="upload-text">Klicken zum Hochladen</div>
+                            <div class="upload-subtext">JPG, PNG bis zu 10MB</div>
+                        </div>
+                        <input type="file" id="fileInput" style="display: none;" accept="image/*">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary btn-block" onclick="switchScreen('home')">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary btn-block">Auftrag veröffentlichen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const craftsmenData = [
+            { name: 'Johann Tischler', category: 'tischler', rating: 4.9, reviews: 87, avatar: '👨', price: '€40-80/h', verified: true },
+            { name: 'Maria Schreiner', category: 'tischler', rating: 4.8, reviews: 65, avatar: '👩', price: '€45-85/h', verified: true },
+            { name: 'Peter Holzmeister', category: 'tischler', rating: 4.7, reviews: 54, avatar: '👨', price: '€40-75/h', verified: true },
+            { name: 'Sophie Möbelbau', category: 'tischler', rating: 4.9, reviews: 92, avatar: '👩', price: '€50-90/h', verified: true },
+            { name: 'Klaus Zimmerer', category: 'tischler', rating: 4.6, reviews: 43, avatar: '👨', price: '€35-70/h', verified: false },
+            { name: 'Anna Parkett', category: 'tischler', rating: 4.8, reviews: 71, avatar: '👩', price: '€42-80/h', verified: true },
+            { name: 'Frank Türen', category: 'tischler', rating: 4.7, reviews: 58, avatar: '👨', price: '€40-75/h', verified: true },
+            { name: 'Lisa Renovierung', category: 'tischler', rating: 4.9, reviews: 78, avatar: '👩', price: '€48-85/h', verified: true },
+            
+            { name: 'Max Elektro', category: 'elektriker', rating: 4.9, reviews: 102, avatar: '👨', price: '€60-110/h', verified: true },
+            { name: 'Petra Strommeister', category: 'elektriker', rating: 4.8, reviews: 84, avatar: '👩', price: '€55-100/h', verified: true },
+            { name: 'Robert Installateur', category: 'elektriker', rating: 4.7, reviews: 67, avatar: '👨', price: '€50-95/h', verified: true },
+            { name: 'Sandra Elektrik', category: 'elektriker', rating: 4.6, reviews: 52, avatar: '👩', price: '€45-85/h', verified: false },
+            { name: 'Thomas Anlagen', category: 'elektriker', rating: 4.8, reviews: 75, avatar: '👨', price: '€58-105/h', verified: true },
+            { name: 'Kathrin Strom', category: 'elektriker', rating: 4.9, reviews: 89, avatar: '👩', price: '€60-110/h', verified: true },
+            
+            { name: 'Farbenmeister', category: 'maler', rating: 4.8, reviews: 73, avatar: '👨', price: '€30-60/h', verified: true },
+            { name: 'Petra Pinselstrich', category: 'maler', rating: 4.9, reviews: 81, avatar: '👩', price: '€32-65/h', verified: true },
+            { name: 'Michael Lackierer', category: 'maler', rating: 4.7, reviews: 61, avatar: '👨', price: '€28-55/h', verified: true },
+            { name: 'Eva Wandgestaltung', category: 'maler', rating: 4.8, reviews: 68, avatar: '👩', price: '€35-70/h', verified: true },
+            { name: 'Hans Malerei', category: 'maler', rating: 4.6, reviews: 45, avatar: '👨', price: '€25-50/h', verified: false },
+            
+            { name: 'Rohr-Experte', category: 'instal', rating: 4.9, reviews: 76, avatar: '👨', price: '€55-100/h', verified: true },
+            { name: 'Ingrid Wasserleitungen', category: 'instal', rating: 4.7, reviews: 59, avatar: '👩', price: '€50-90/h', verified: true },
+            { name: 'Frank Sanitär', category: 'instal', rating: 4.8, reviews: 72, avatar: '👨', price: '€52-95/h', verified: true },
+            { name: 'Julia Heizung', category: 'instal', rating: 4.9, reviews: 85, avatar: '👩', price: '€58-105/h', verified: true },
+            { name: 'Werner Installation', category: 'instal', rating: 4.6, reviews: 48, avatar: '👨', price: '€48-85/h', verified: false }
+        ];
+
+        function renderCraftsmen(filter = 'all') {
+            const container = document.getElementById('craftsmenList');
+            let filtered = craftsmenData;
+            
+            if (filter !== 'all') {
+                filtered = craftsmenData.filter(c => c.category === filter);
+            }
+
+            container.innerHTML = filtered.map(craftsman => `
+                <div class="craftsman-card-item" onclick="showCraftsmanDetails('${craftsman.name}')">
+                    <div class="craftsman-card-avatar">${craftsman.avatar}</div>
+                    <div class="craftsman-card-name">${craftsman.name}${craftsman.verified ? ' ✓' : ''}</div>
+                    <div class="craftsman-card-category">${craftsman.category}</div>
+                    <div class="craftsman-card-rating">⭐ ${craftsman.rating}</div>
+                    <div class="craftsman-card-reviews">(${craftsman.reviews} Bewertungen)</div>
+                    <div class="craftsman-card-price">${craftsman.price}</div>
+                    <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); contactCraftsman('${craftsman.name}')">Kontaktieren</button>
+                </div>
+            `).join('');
+        }
+
+        function filterCraftsmen(category, event) {
+            document.querySelectorAll('.filter-tag').forEach(tag => tag.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCraftsmen(category);
+        }
+
+        function showCraftsmanDetails(name) {
+            const craftsman = craftsmenData.find(c => c.name === name);
+            const detailsHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 2000;">
+                    <div style="background: white; width: 100%; max-width: 600px; border-radius: 16px 16px 0 0; padding: 2rem; max-height: 80vh; overflow-y: auto;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                        <div style="text-align: center; margin-bottom: 1.5rem;">
+                            <div style="font-size: 3rem; margin-bottom: 0.5rem;">${craftsman.avatar}</div>
+                            <h2 style="font-size: 1.5rem; font-weight: 700;">${craftsman.name}${craftsman.verified ? ' ✓' : ''}</h2>
+                            <div style="color: var(--orange); margin: 0.5rem 0;">⭐ ${craftsman.rating} (${craftsman.reviews} Bewertungen)</div>
+                            <div style="color: var(--pink); font-weight: 600; font-size: 1.1rem;">${craftsman.price}</div>
+                        </div>
+                        <div style="background: var(--light); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <div style="text-align: center;">
+                                <div style="color: var(--gray); font-size: 0.8rem; margin-bottom: 0.3rem;">Kategorie</div>
+                                <div style="font-weight: 600;">${craftsman.category}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="contactCraftsman('${craftsman.name}'); this.closest('[style*=fixed]').remove();">Jetzt kontaktieren</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', detailsHTML);
+        }
+
+        function contactCraftsman(name) {
+            alert(`📞 Anfrage an ${name} gesendet!\n\nDer Handwerker wird sich in Kürze bei dir melden.`);
+        }
+
+        const jobsData = [
+            { id: 0, title: 'Küchenmontage in Wohnung', lat: 48.2082, lng: 16.3738, budget: '€400-600', location: 'Wien, 1020', category: 'T', color: '#E91E63', craftsman: 'Johann Tischler', description: 'Neue IKEA Küche muss montiert werden. Alle Teile sind vorhanden. Arbeitsplatten müssen zugeschnitten und montiert werden.' },
+            { id: 1, title: 'Elektroinstallation Neubau', lat: 47.8095, lng: 13.0550, budget: '€3000-4000', location: 'Salzburg, 5020', category: 'E', color: '#1976D2', craftsman: 'Max Elektro', description: 'Komplette Elektroinstallation für Neubau erforderlich.' },
+            { id: 2, title: 'Wohnzimmer streichen', lat: 48.2857, lng: 14.2858, budget: '€500-800', location: 'Linz, 4020', category: 'M', color: '#4CAF50', craftsman: 'Farbenmeister', description: 'Wohnzimmer komplett neu streichen.' },
+            { id: 3, title: 'Badezimmer Wasserleitung reparieren', lat: 48.1796, lng: 16.4023, budget: '€200-400', location: 'Wien, 1030', category: 'P', color: '#FF9800', craftsman: 'Rohr-Experte', description: 'Wasserleitung im Badezimmer reparieren.' },
+            { id: 4, title: 'Terrasse aus Holz bauen', lat: 48.2088, lng: 16.3740, budget: '€1500-2500', location: 'Wien, 1120', category: 'T', color: '#E91E63', craftsman: 'Johann Tischler', description: 'Terrasse aus hochwertigem Holz bauen.' },
+            { id: 5, title: 'Fenster reparieren', lat: 47.0707, lng: 15.4395, budget: '€150-300', location: 'Graz, 8010', category: 'M', color: '#4CAF50', craftsman: 'Fenster-Spezialist', description: 'Fensterrahmen und Dichtungen reparieren.' }
+        ];
+
+        let homeMapInstance = null;
+        let homeMapMarkers = [];
+        let selectedJobIndex = 0;
+
+        function initHomeMap() {
+            if (homeMapInstance) return;
+            const container = document.getElementById('home-map');
+            if (!container || container._leaflet_id) return;
+
+            homeMapInstance = L.map('home-map').setView([48.2, 13.2], 7);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(homeMapInstance);
+
+            // Add markers for all jobs
+            jobsData.forEach((job, index) => {
+                const marker = L.circleMarker([job.lat, job.lng], {
+                    radius: 10,
+                    fillColor: job.color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(homeMapInstance)
+                  .bindPopup(`<strong>${job.title}</strong><br>${job.location}<br>${job.budget}`)
+                  .on('click', function() {
+                      selectJob(index);
+                      showJobDetails(index);
+                  });
+
+                homeMapMarkers.push({ marker, index });
+            });
+
+            // Select first job
+            selectJob(0);
+        }
+
+        function selectJob(index, event) {
+            if (event) event.stopPropagation();
+            selectedJobIndex = index;
+
+            // Update list items
+            document.querySelectorAll('.job-list-item').forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+
+            // Center map on selected job
+            if (homeMapInstance) {
+                const job = jobsData[index];
+                homeMapInstance.setView([job.lat, job.lng], 11);
+                homeMapMarkers[index]?.marker.openPopup();
+            }
+        }
+
+        function showJobDetails(jobIndex) {
+            const job = jobsData[jobIndex];
+            const detailsHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 2000;">
+                    <div style="background: white; width: 100%; max-width: 600px; border-radius: 16px 16px 0 0; padding: 2rem; max-height: 80vh; overflow-y: auto;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">${job.title}</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: var(--light); padding: 1rem; border-radius: 8px;">
+                                <div style="color: var(--gray); font-size: 0.8rem; margin-bottom: 0.3rem;">Budget</div>
+                                <div style="font-size: 1.3rem; font-weight: 700; color: var(--pink);">${job.budget}</div>
+                            </div>
+                            <div style="background: var(--light); padding: 1rem; border-radius: 8px;">
+                                <div style="color: var(--gray); font-size: 0.8rem; margin-bottom: 0.3rem;">Standort</div>
+                                <div style="font-size: 1.1rem; font-weight: 600;">${job.location}</div>
+                            </div>
+                        </div>
+                        <h3 style="font-weight: 600; margin-bottom: 0.5rem;">Beschreibung</h3>
+                        <p style="color: var(--gray-dark); margin-bottom: 1.5rem;">${job.description}</p>
+                        <button class="btn btn-primary btn-block" onclick="switchScreen('craftsman'); this.closest('[style*=fixed]').remove();">👤 Zum Handwerker</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', detailsHTML);
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.screen === screenId) link.classList.add('active');
+            });
+
+            if (screenId === 'home') {
+                setTimeout(initHomeMap, 100);
+            } else if (screenId === 'craftsman') {
+                setTimeout(() => renderCraftsmen('all'), 100);
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function selectCategory(event) {
+            document.querySelectorAll('.category-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
+        function switchJobTab(event, tab) {
+            document.querySelectorAll('.job-tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchScreen(link.dataset.screen);
+            });
+        });
+
+        document.getElementById('jobForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const location = document.getElementById('location').value;
+            const budget = document.getElementById('budget').value;
+            alert(`✅ Auftrag "${title}" in ${location} erfolgreich erstellt!\n\nBudget: ${budget}\n\nHandwerker werden in Kürze kontaktiert.`);
+            document.getElementById('jobForm').reset();
+            switchScreen('home');
+        });
+
+        document.getElementById('fileInput')?.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const uploadBox = document.querySelector('.upload-box');
+                uploadBox.innerHTML = `<div style="color: var(--green); font-weight: 600;">✓ ${e.target.files[0].name}</div>`;
+            }
+        });
+
+        // Add click handlers to craftsman profile
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.category-tag')) {
+                e.target.closest('.category-tag').classList.toggle('active');
+            }
+            if (e.target.closest('.menu-item')) {
+                const label = e.target.closest('.menu-item').querySelector('.menu-item-label');
+                alert(`📱 ${label?.textContent || 'Funktion'} wird geladen...`);
+            }
+        });
+
+        // Initialize home map on load
+        window.addEventListener('load', () => {
+            initHomeMap();
+        });
+    </script>
+</body>
+</html>
